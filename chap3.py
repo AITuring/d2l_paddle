@@ -1,4 +1,9 @@
 # Defined in file: ./chapter_linear-networks/linear-regression.md 3.1线性回归
+import time
+
+import numpy as np
+
+
 class Timer:
     """Record multiple running times."""
     def __init__(self):
@@ -30,31 +35,28 @@ class Timer:
 # Defined in file: ./chapter_linear-networks/linear-regression-scratch.md  3.2线性回归从零开始实现
 def synthetic_data(w, b, num_examples):
     """Generate y = Xw + b + noise."""
-    X = d2l.normal(0, 1, (num_examples, len(w)))
-    y = d2l.matmul(X, w) + b
-    y += d2l.normal(0, 0.01, y.shape)
-    return X, d2l.reshape(y, (-1, 1))
+    X = np.random.normal(0, 1, (num_examples, len(w)))
+    y = np.dot(X, w) + b
+    y += np.random.normal(0, 0.01, y.shape)
+    return X, y.reshape((-1, 1))
 
 
 # Defined in file: ./chapter_linear-networks/linear-regression-scratch.md  3.2.4. 定义模型
 def linreg(X, w, b):
     """The linear regression model."""
-    return d2l.matmul(X, w) + b
+    return np.dot(X, w) + b
 
 
 # Defined in file: ./chapter_linear-networks/linear-regression-scratch.md  3.2.5. 定义损失函数
 def squared_loss(y_hat, y):
     """Squared loss."""
-    return (y_hat - d2l.reshape(y, y_hat.shape))**2 / 2
-
+    return (y_hat - y.reshape(y_hat.shape)) ** 2 / 2
 
 # Defined in file: ./chapter_linear-networks/linear-regression-scratch.md  3.2.6. 定义优化算法
 def sgd(params, lr, batch_size):
     """Minibatch stochastic gradient descent."""
-    with torch.no_grad():
-        for param in params:
-            param -= lr * param.grad / batch_size
-            param.grad.zero_()
+    for param in params:
+      param[:] = param - lr * param.grad / batch_size
 
 
 # Defined in file: ./chapter_linear-networks/linear-regression-concise.md  3.3.2. 读取数据集
