@@ -1,6 +1,6 @@
 # Defined in file: ./chapter_linear-networks/linear-regression.md 3.1线性回归
 import time
-
+from IPython import display
 import numpy as np
 import matplotlib.pyplot as plt
 import paddle
@@ -161,31 +161,32 @@ class Accumulator:
 
 
 # Defined in file: ./chapter_linear-networks/softmax-regression-scratch.md  3.6.6. 训练
-def train_epoch_ch3(net, train_iter, loss, updater):
-    # 将模型设置为训练模式
-    if isinstance(net, torch.nn.Module):
-        net.train()
-    # 训练损失总和、训练准确度总和、样本数
-    metric = Accumulator(3)
-    for X, y in train_iter:
-        # 计算梯度并更新参数
-        y_hat = net(X)
-        l = loss(y_hat, y)
-        if isinstance(updater, torch.optim.Optimizer):
-            # 使用PyTorch内置的优化器和损失函数
-            updater.zero_grad()
-            l.backward()
-            updater.step()
-            metric.add(
-                float(l) * len(y), accuracy(y_hat, y),
-                y.size().numel())
-        else:
-            # 使用定制的优化器和损失函数
-            l.sum().backward()
-            updater(X.shape[0])
-            metric.add(float(l.sum()), accuracy(y_hat, y), y.numel())
-    # 返回训练损失和训练准确率
-    return metric[0] / metric[2], metric[1] / metric[2]
+def train_epoch_ch3(net, train_iter, loss, updater):  # @save
+  """训练模型一个迭代周期（定义见第3章）。"""
+  # 将模型设置为训练模式
+  if isinstance(net, paddle.nn.Layer):
+    net.train()
+  # 训练损失总和、训练准确度总和、样本数
+  metric = Accumulator(3)
+  for X, y in train_iter:
+    # 计算梯度并更新参数
+    y_hat = net(X)
+    l = loss(y_hat, y)
+    if isinstance(updater,paddle.optimizer.Optimizer):
+      # 使用PyTorch内置的优化器和损失函数
+      updater.zero_grad()
+      l.backward()
+      updater.step()
+      metric.add(
+        float(l) * len(y), accuracy(y_hat, y),
+        y.size().numel())
+    else:
+      # 使用定制的优化器和损失函数
+      l.sum().backward()
+      updater(X.shape[0])
+      metric.add(float(l.sum()), accuracy(y_hat, y), y.numel())
+  # 返回训练损失和训练准确率
+  return metric[0] / metric[2], metric[1] / metric[2]
 
 
 # Defined in file: ./chapter_linear-networks/softmax-regression-scratch.md  3.6.6. 训练
@@ -204,7 +205,7 @@ class Animator:
     if nrows * ncols == 1:
       self.axes = [self.axes, ]
     # Use a lambda function to capture arguments
-    self.config_axes = lambda: d2l.set_axes(self.axes[
+    self.config_axes = lambda: plt.set_axes(self.axes[
                                               0], xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
     self.X, self.Y, self.fmts = None, None, fmts
 
@@ -252,7 +253,7 @@ def predict_ch3(net, test_iter, n=6):
   for X, y in test_iter:
     break
   trues = d2l.get_fashion_mnist_labels(y)
-  preds = d2l.get_fashion_mnist_labels(d2l.argmax(net(X), axis=1))
+  preds = d2l.get_fashion_mnist_labels(paddle.argmax(net(X), axis=1))
   titles = [true + '\n' + pred for true, pred in zip(trues, preds)]
-  d2l.show_images(d2l.reshape(X[0:n], (n, 28, 28)), 1, n,
+  d2l.show_images(paddle.reshape(X[0:n], (n, 28, 28)), 1, n,
                   titles=titles[0:n])
