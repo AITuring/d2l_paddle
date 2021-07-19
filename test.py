@@ -1,30 +1,60 @@
-import math
-
-from chap3 import Timer
 import numpy as np
-import matplotlib.pylab as pb
 
-n = 10000
-a = np.ones(n)
-b = np.ones(n)
-c = np.zeros(n)
-timer = Timer()
+import paddle
+import paddle.nn as nn
+import paddle.nn.functional as F
+from paddle.io import Dataset, BatchSampler, DataLoader
 
-for i in range(n):
-  c[i] = a[i] + b[i]
-print(f'{timer.stop():.5f} sec')
+BATCH_NUM = 20
+BATCH_SIZE = 16
+EPOCH_NUM = 4
 
+IMAGE_SIZE = 784
+CLASS_NUM = 10
 
-def synthetic_data(w, b, num_examples):  # @save
-  """生成 y = Xw + b + 噪声。"""
-  X = np.random.normal(0, 1, (num_examples, len(w)))
-  y = np.dot(X, w) + b
-  y += np.random.normal(0, 0.01, y.shape)
-  return X, y.reshape((-1, 1))
+USE_GPU = False # whether use GPU to run model
 
+# define a random dataset
+class RandomDataset(Dataset):
+    def __init__(self, num_samples):
+        self.num_samples = num_samples
 
-true_w = np.array([2, -3.4])
-true_b = 4.2
-features, labels = synthetic_data(true_w, true_b, 1000)
-print('features:', features[0], '\nlabel:', labels[0])
+    def __getitem__(self, idx):
+        image = np.random.random([IMAGE_SIZE]).astype('float32')
+        label = np.random.randint(0, CLASS_NUM - 1, (1, )).astype('int64')
+        return image, label
 
+    def __len__(self):
+        return self.num_samples
+
+dataset = RandomDataset(BATCH_NUM * BATCH_SIZE)
+
+print(dataset)
+
+class SimpleNet(nn.Layer):
+    def __init__(self):
+        super(SimpleNet, self).__init__()
+        self.fc = nn.Linear(IMAGE_SIZE, CLASS_NUM)
+
+    def forward(self, image, label=None):
+        return self.fc(image)
+
+simple_net = SimpleNet()
+opt = paddle.optimizer.SGD(learning_rate=1e-3,
+                          parameters=simple_net.parameters())
+
+loader = DataLoader(dataset,
+                    batch_size=BATCH_SIZE,
+                    shuffle=True,
+                    drop_last=True,
+                    num_workers=0)
+
+for e in range(EPOCH_NUM):
+    for i, (image, label) in enumerate(loader()):
+        out = simple_net(image)
+        loss = F.cross_entropy(out, label)
+        avg_loss = paddle.mean(loss)
+        avg_loss.backward()
+        opt.minimize(avg_loss)
+        simple_net.clear_gradients()
+        print("Epoch {} batch {}: loss = {}".format(e, i, np.mean(loss.numpy())))
