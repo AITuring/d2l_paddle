@@ -200,7 +200,7 @@ class Animator:
     # Incrementally plot multiple lines
     if legend is None:
       legend = []
-    d2l.use_svg_display()
+    # d2l.use_svg_display()
     self.fig, self.axes = plt.subplots(nrows, ncols, figsize=figsize)
     if nrows * ncols == 1:
       self.axes = [self.axes, ]
@@ -252,8 +252,8 @@ def predict_ch3(net, test_iter, n=6):
   """Predict labels (defined in Chapter 3)."""
   for X, y in test_iter:
     break
-  trues = d2l.get_fashion_mnist_labels(y)
-  preds = d2l.get_fashion_mnist_labels(paddle.argmax(net(X), axis=1))
+  trues = paddle.get_fashion_mnist_labels(y)
+  preds = paddle.get_fashion_mnist_labels(paddle.argmax(net(X), axis=1))
   titles = [true + '\n' + pred for true, pred in zip(trues, preds)]
-  d2l.show_images(paddle.reshape(X[0:n], (n, 28, 28)), 1, n,
+  plt.show_images(paddle.reshape(X[0:n], (n, 28, 28)), 1, n,
                   titles=titles[0:n])
